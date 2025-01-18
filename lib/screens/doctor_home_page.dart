@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:harry/screens/appoinment_booked_page.dart';
 import 'package:harry/screens/set_schedule_page.dart';
+import 'package:harry/screens/view_report_page.dart';
 
 class DoctorHomePage extends StatelessWidget {
   const DoctorHomePage({super.key});
@@ -19,18 +20,16 @@ class DoctorHomePage extends StatelessWidget {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
-          //Remaining to load image
           image: const DecorationImage(
             image: AssetImage("assets/img/image.jpg"), // Background image
-            fit: BoxFit.cover, // Ensure the image covers the entire screen
-            opacity: 0.3, // Add some opacity to blend with the gradient
+            fit: BoxFit.cover,
+            opacity: 0.3,
           ),
         ),
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Welcome Text
               const Text(
                 'Welcome Doctor!',
                 style: TextStyle(
@@ -46,8 +45,6 @@ class DoctorHomePage extends StatelessWidget {
                 style: TextStyle(fontSize: 16.0, color: Colors.black54),
               ),
               const SizedBox(height: 30.0),
-
-              // Card with Buttons
               Card(
                 margin: const EdgeInsets.symmetric(horizontal: 20.0),
                 elevation: 5.0,
@@ -58,7 +55,6 @@ class DoctorHomePage extends StatelessWidget {
                   padding: const EdgeInsets.all(20.0),
                   child: Column(
                     children: [
-                      // Appointments Button
                       ElevatedButton.icon(
                         onPressed: () {
                           Navigator.push(
@@ -81,8 +77,6 @@ class DoctorHomePage extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 15.0),
-
-                      // Set Schedule Button
                       ElevatedButton.icon(
                         onPressed: () {
                           Navigator.push(
@@ -96,6 +90,27 @@ class DoctorHomePage extends StatelessWidget {
                         label: const Text('Set Schedule'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.green,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 20.0, vertical: 15.0),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10.0),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 15.0),
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const ViewReportPage(),
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.article, size: 20.0),
+                        label: const Text('View Report'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.orange,
                           padding: const EdgeInsets.symmetric(
                               horizontal: 20.0, vertical: 15.0),
                           shape: RoundedRectangleBorder(

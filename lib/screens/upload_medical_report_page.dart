@@ -9,12 +9,15 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class UploadMedicalReportPage extends StatefulWidget {
   const UploadMedicalReportPage({super.key});
 
   @override
-  State<UploadMedicalReportPage> createState() => _UploadMedicalReportPageState();
+  State<UploadMedicalReportPage> createState() =>
+      _UploadMedicalReportPageState();
 }
 
 class _UploadMedicalReportPageState extends State<UploadMedicalReportPage> {
@@ -65,6 +68,7 @@ class _UploadMedicalReportPageState extends State<UploadMedicalReportPage> {
 
     setState(() {
       _encryptionKey = base64Encode(key.bytes + iv.bytes);
+       _encryptionKeyController.text = _encryptionKey!; // Automatically set the encryption key in the text field
     });
 
     return {
@@ -76,7 +80,8 @@ class _UploadMedicalReportPageState extends State<UploadMedicalReportPage> {
 
   Future<void> _uploadToPinata(Uint8List encryptedData, String fileName) async {
     const String apiKey = 'f7b770e84098104f4947';
-    const String apiSecret = '6ee68dc0a40a9b9094c96f1b354e2ea2844c764e6cb3173dc0df6cb00e6453f1';
+    const String apiSecret =
+        '6ee68dc0a40a9b9094c96f1b354e2ea2844c764e6cb3173dc0df6cb00e6453f1';
     const String url = 'https://api.pinata.cloud/pinning/pinFileToIPFS';
 
     try {
@@ -148,13 +153,13 @@ class _UploadMedicalReportPageState extends State<UploadMedicalReportPage> {
   }
 
   Future<void> _openPhantomBrowser() async {
-    // Construct the Phantom deep link
     final String encodedDappUrl = Uri.encodeComponent(dappUrl);
     final String encodedRefUrl = Uri.encodeComponent(refUrl);
-    final String deepLink = 'https://phantom.app/ul/browse/$encodedDappUrl?ref=$encodedRefUrl';
+    final String deepLink =
+        'https://phantom.app/ul/browse/$encodedDappUrl?ref=$encodedRefUrl';
 
-    // Launch Phantom in-app browser
-    if (!await launchUrl(Uri.parse(deepLink), mode: LaunchMode.externalApplication)) {
+    if (!await launchUrl(Uri.parse(deepLink),
+        mode: LaunchMode.externalApplication)) {
       throw 'Could not launch $deepLink';
     }
   }
@@ -167,6 +172,52 @@ class _UploadMedicalReportPageState extends State<UploadMedicalReportPage> {
         duration: Duration(seconds: 2),
       ),
     );
+  }
+
+  // New Additions Below:
+  final _transactionSignatureController = TextEditingController();
+  final _encryptionKeyController = TextEditingController();
+  String? _selectedDoctorEmail;
+  String? _userEmail;
+  List<String> _doctorEmails = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchDoctorEmails();
+    _setUserEmail();
+  }
+
+  Future<void> _fetchDoctorEmails() async {
+    final snapshot =
+        await FirebaseFirestore.instance.collection('doctors').get();
+    setState(() {
+      _doctorEmails =
+          snapshot.docs.map((doc) => doc['email'] as String).toList();
+    });
+  }
+
+  Future<void> _setUserEmail() async {
+    User? user = FirebaseAuth.instance.currentUser;
+    setState(() {
+      _userEmail = user?.email ?? '';
+    });
+  }
+
+  Future<void> _saveTransactionDetails() async {
+    final transactionData = {
+      'transactionSignature': _transactionSignatureController.text,
+      'encryptionKey': _encryptionKey,
+      'doctorEmail': _selectedDoctorEmail,
+      'userEmail': _userEmail,
+      'timestamp': DateTime.now(),
+    };
+
+    await FirebaseFirestore.instance.collection('transactions').add(transactionData);
+
+    setState(() {
+      _statusMessage = "Transaction details saved successfully!";
+    });
   }
 
   @override
@@ -247,6 +298,38 @@ class _UploadMedicalReportPageState extends State<UploadMedicalReportPage> {
                 "Save CID to Solana",
                 style: TextStyle(fontSize: 18.0),
               ),
+            ),
+              DropdownButtonFormField<String>(
+              value: _selectedDoctorEmail,
+              decoration: const InputDecoration(labelText: 'Select Doctor'),
+              items: _doctorEmails.map((email) {
+                return DropdownMenuItem(
+                  value: email,
+                  child: Text(email),
+                );
+              }).toList(),
+              onChanged: (value) {
+                setState(() {
+                  _selectedDoctorEmail = value;
+                });
+              },
+            ),
+            TextField(
+              controller: _transactionSignatureController,
+              decoration: const InputDecoration(labelText: 'Transaction Signature'),
+            ),
+            TextField(
+              controller: _encryptionKeyController,
+              decoration: const InputDecoration(labelText: 'Encryption Key'),
+            ),
+            ElevatedButton(
+              onPressed: _saveTransactionDetails,
+              child: const Text('Save Details'),
+            ),
+            const SizedBox(height: 16.0),
+            Text(
+              _statusMessage,
+              style: const TextStyle(color: Colors.red),
             ),
           ],
         ),
